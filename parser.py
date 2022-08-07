@@ -46,12 +46,10 @@ class Parser:
     
     def _advance(self):
         tok = next(self.tokens, None)
-        print(tok)
         '''Advance one token ahead'''
         self.tok, self.nexttoken = self.nexttoken, tok
 
     def __accept(self, toktype):
-        print(self.nexttoken)
         if self.nexttoken and self.nexttoken.type == toktype:
             self._advance()
             return True 
@@ -64,9 +62,13 @@ class Parser:
     def expr(self):
         exprval = self.term()
         self.order_list.append(exprval)
-        while self.__accept('PLUS') or self.__accept('MINUS'):
+        while self.__accept('PLUS') or self.__accept('MINUS') \
+            or self.__accept('RPAREN'):
+            
+            # token is ) then return the calculated value in a () 
+            if self.tok.type == 'RPAREN':
+                return exprval
             op = self.tok.type 
-            self.order_list.append(op)
             right = self.term()
             if op == 'PLUS':
                 exprval += right
@@ -77,22 +79,20 @@ class Parser:
     
     def term(self):
         termval = self.factor()
-        val = '(' + str(termval)
         while self.__accept('TIMES') or self.__accept("DIVIDE"):
             op = self.tok.type
-            val += ' ' + op + ' '
             right = self.factor() # get the operand 
             if op == 'TIMES':
                 termval *= right
             elif op == 'DIVIDE':
                 termval /= right
-        self.order_list.append(val + ')')
         return termval
     
     
     def factor(self):
         if self.__accept('NUM'):
-            return int(self.tok.value)
+            val = self.tok.value
+            return int(val)
         elif self.__accept('LPAREN'):
             exprval = self.expr()
             return exprval
